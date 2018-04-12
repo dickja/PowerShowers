@@ -8,7 +8,7 @@
  .NOTES   
   Author: Richard Croft
   Twitter: @dickjacroft
-  email: richard.j.a.croft@gmail.com
+  
 #>
 
 function Set-VMBootDelay {
