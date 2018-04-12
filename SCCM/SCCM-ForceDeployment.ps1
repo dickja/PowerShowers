@@ -8,8 +8,7 @@
  .NOTES   
  Author: Richard Croft
  Twitter: @dickjacroft
- email: richard.j.a.croft@gmail.com
-#>
+ #>
 
 #Source of machine names to action
 $Source = get-content "<SOURCE_LOCATION>"
