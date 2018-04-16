@@ -1,23 +1,89 @@
-<#
+ <#
  .SYNOPSIS  
- Force SCCM Deployment for Application
+  Force package deployment
  
  .DESCRIPTION  
- Adds a client to a Collection with a Direct rule then requests a client Machine Policy and App Deployment
+  Changes the boot delay for a VM, allowing access to boot menu options.
  
  .NOTES   
- Author: Richard Croft
- Twitter: @dickjacroft
- #>
+  Author: Richard Croft
+  Twitter: @dickjacroft
+ /#>
 
-#Source of machine names to action
-$Source = get-content "<SOURCE_LOCATION>"
-$Collection = "<COLLECTION_NAME>"
+
+#DECLARE FUNCTIONS
+
+<#
+ .SYNOPSIS  
+  Request Machine Policy
+ 
+ .DESCRIPTION  
+  Request and download machine policy from SCCM
+ 
+ .EXAMPLE
+ Run-RequestMachinePolicy -ComputerName SYDCOMP_001
+
+ /#>
+function Run-RequestMachinePolicy{
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$True,
+        ValueFromPipeline=$True,
+        ValueFromPipelineByPropertyName=$True,
+        HelpMessage='Name of the VM to Target')]
+        [string[]]$ComputerName
+        )
+    process {
+                try {
+                    Invoke-CMClientNotification -DeviceName "$Computer" -ActionType ClientNotificationRequestMachinePolicyNow
+                    }
+            catch [System.Management.Automation.ItemNotFoundException]
+                    {
+                    write-host "ERROR: Exception: $computer could not be found"
+                    } 
+        }
+    }
+
+<#
+ .SYNOPSIS  
+  Run Application Deployment Evaluation
+ 
+ .DESCRIPTION  
+  Re-evaluate all of the global conditions and it also re-detects all applications deployed to the system as required.
+ 
+ .EXAMPLE
+ Run-RequestMachinePolicy -ComputerName SYDCOMP_001
+
+ /#>
+function Run-AppDeployment {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$True,
+        ValueFromPipeline=$True,
+        ValueFromPipelineByPropertyName=$True,
+        HelpMessage='Name of the VM to Target')]
+        [string[]]$ComputerName
+        )
+    process {
+            try   {
+                  Invoke-CMClientNotification -DeviceName "$ComputerName" -ActionType ClientNotificationAppDeplEvalNow
+                  }
+            catch [System.Management.Automation.ItemNotFoundException]
+                  {
+                  write-host "ERROR: Exception: $ComputerName could not be found"
+                  } 
+            }
+    }        
+
+#END FUNCTION DECLARATION
+
+#Collection Name that machines will be added to.
+$Collection = "APP VMware Horizon Agent Upgrade"
 #Gets collectionID from Collection named above
 $CollectionID = Get-CMCollection -Name $Collection | select -Property CollectionID | % {$_.CollectionID}
 
-#Iterates through each machine in the source array and adds it to the collection, catch if the machine is already in the collection and notify.
-foreach ($computer in $Source) {
+#Iterates through each computer name in the agentupgrade.txt file and adds it to the Collection
+foreach ($computer in (get-content 'C:\Powershell Scripts\Data\agentupgrade.txt')) {
         try {
               Add-CMDeviceCollectionDirectMembershipRule -CollectionID $CollectionID `
 		      -ResourceId $(Get-CMDevice -Name $Computer).ResourceID
@@ -27,26 +93,12 @@ foreach ($computer in $Source) {
               } 
         }
 
-#Iterates through each machine in the source array and asks it to request its machine policy, catch if there is an issue finding the machine
-foreach ($computer in ) {
-        try {
-            Invoke-CMClientNotification -DeviceName $Computer -ActionType ClientNotificationRequestMachinePolicyNow
-            }
-        catch [System.Management.Automation.ItemNotFoundException]
-              {
-              write-host "ERROR: Exception: $computer could not be found"
-              } 
-        }
-
+#For each machine in the agentupgrade.txt file run a Request Machine Policy
+foreach ($computer in (get-content 'C:\Powershell Scripts\Data\agentupgrade.txt')) {Run-RequestMachinePolicy -ComputerName $computer}
+        
 start-sleep -Seconds 120
 
-#Iterates through each machine in the source array and asks it to run an Application Deployment Cycle, catch if there is an issue finding the machine
-foreach ($computer in $Source) {
-        try {
-             Invoke-CMClientNotification -DeviceName $Computer -ActionType ClientNotificationAppDeplEvalNow
-             }
-        catch [System.Management.Automation.ItemNotFoundException]
-              {
-              write-host "ERROR: Exception: $computer could not be found"
-              } 
-        }
+#For each machine in the agentupgrade.txt file run a Application Deployment Evaluation
+foreach ($computer in (get-content 'C:\Powershell Scripts\Data\agentupgrade.txt')) {Run-AppDeployment -ComputerName $computer}
+     
+
