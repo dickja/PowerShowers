@@ -95,7 +95,8 @@ foreach ($computer in (get-content 'C:\Powershell Scripts\Data\agentupgrade.txt'
 
 #For each machine in the agentupgrade.txt file run a Request Machine Policy
 foreach ($computer in (get-content 'C:\Powershell Scripts\Data\agentupgrade.txt')) {Run-RequestMachinePolicy -ComputerName $computer}
-        
+
+#Hardcoded sleep used due to environment variables, if you can preferably verify the updated log files in - %WINDIR%\System32\CCM\Logs       
 start-sleep -Seconds 120
 
 #For each machine in the agentupgrade.txt file run a Application Deployment Evaluation
