@@ -21,7 +21,7 @@
   Request and download machine policy from SCCM
  
  .EXAMPLE
- Run-RequestMachinePolicy -ComputerName SYDCOMP_001
+ Run-RequestMachinePolicy -ComputerName SOECOMP_001
 
  /#>
 function Run-RequestMachinePolicy{
